@@ -30,10 +30,11 @@ Remember that [Emil Hvitfeldt](https://www.emilhvitfeldt.com/) (of Posit) has pu
   
 - Run the `load-packages` code chunk or **knit** <img src="../README-img/knit-icon.png" alt="knit" width = "20"/> icon your Rmd document to verify that no errors occur.
 
-```{r load-packages}
+```{r load-packages, message=FALSE}
 library(tidyverse)
 library(tidymodels)
 library(GGally)
+library("scatterplot3d")
 ```
 
 Since we will be looking at many relationships graphically, it will be nice to not have to code each of these individually.
@@ -88,7 +89,7 @@ $$
 ```{r distrubution-plots}
 ggplot(hfi_2016, aes(y = pf_rank)) +
   geom_boxplot(fill = "grey") +
-  ggtitle("Box Plot ofPersonal Freedom (rank)") +
+  ggtitle("Box Plot of Personal Freedom (rank)") +
   ylab("Personal Freedom (rank)")
 
 ggplot(hfi_2016, aes(y = pf_score)) +
@@ -112,11 +113,16 @@ Review how you described this model in Activity 2.
   - How good of a fit was this model?
     What did you use to assess this?
 
+Answer: Using the `tidy` output, I got the parameter estimates. and this was the parameter estimates $\hat{\texttt{pf\score}} = 4.28 + 0.54 \times \texttt{pf\_expression\_control}$ and the model was quite good, as it showed the strong positive linear relationship, To assess I used $R^2$ (the coefficient of determination), Linearity & Constant variability. 
+
 For this activity, we will begin using the two other quantitative variables to describe the patterns in the response variable.
 Take a moment to think about what this previous sentence means:
 
 - What does this mean from a statistical point of view?
+Answer: Using two other quantitative variables to describe the patterns in the response variable means incorporating additional predictors into your analysis to better understand and model the relationship with the response variable.
+
 - What does this mean from a "real world" point of view (i.e., for your data's situation)?
+Answer: This means a more deeper understanding of how various factors contribute to personal freedom scores
 
 Now, we will obtain graphical and numerical summaries to describe the pairwise relationships.
 
@@ -125,9 +131,9 @@ Now, we will obtain graphical and numerical summaries to describe the pairwise r
 - Replace `explanatory` in the `select` line with the variable you identified above
 - Run your code chunk or knit your document.
   
-```{verbatim pairs-plot}
+```{r pairs-plot, warning=FALSE}
 hfi_2016 %>% 
-  select(pf_score, pf_expression_control, explanatory) %>% 
+  select(pf_score, pf_expression_control, pf_rank) %>% 
   ggpairs()
 ```
 
@@ -142,12 +148,22 @@ After running the `pairs-plot` code, answer the following questions:
 1. For each pair of variables, how would you describe the relationship graphically?
   Do any of the relationships look linear?
   Are there any interesting/odd features (outliers, non-linear patterns, etc.)?
+  
+Answer: pf_score vs. pf_expression_control: The relationship appears linear, with a positive correlation. As pf_expression_control increases, pf_score also increases. No outliers are visible, and the pattern seems consistent.
+pf_score vs. pf_rank: The relationship is strongly negative, which makes sense since a higher rank (a larger number) indicates a lower level of freedom. This relationship is also linear.
+pf_expression_control vs. pf_rank: Its a negative relationship. As pf_expression_control increases, indicating more control and thus less freedom, pf_rank increases as well.
 
 2. For each pair of variables, how would you describe the relationship numerically?
+
+Answer: pf_score and pf_expression_control has corr = 0.845 which a strong positive linear relationship.
+pf_score and pf_rank has corr = -0.977 which is a strong negative linear relationship. 
+pf_expression_control and pf_rank has corr = -0.855 which is a strong negative linear relationship. 
 
 3. Are your two explanatory variables collinear (correlated)?
   Essentially, this means that adding more than one of these variables to the model would not add much value to the model.
   We will talk more on this issue in Activity 4 (other considerations in regression models).
+
+Answer: They appear to be collinear with the response variable (pf_score). This indicates that they might not provide independent information in a predictive model for pf_score.
 
 ## The multiple linear regression model
 
@@ -162,7 +178,7 @@ $$
 - Replace `explanatory`, similarly to what you did in your `pairs-plot` R code chunk.
 - Run your code chunk or knit your document.
   
-```{verbatim mlr-model}
+```{r mlr-model}
 #fit the mlr model
 lm_spec <- linear_reg() %>%
   set_mode("regression") %>%
@@ -171,7 +187,7 @@ lm_spec <- linear_reg() %>%
 lm_spec
 
 mlr_mod <- lm_spec %>% 
-fit(pf_score ~ pf_expression_control + explanatory, data = hfi_2016)
+fit(pf_score ~ pf_expression_control + pf_rank, data = hfi_2016)
 
 # model output
 tidy(mlr_mod)
@@ -183,14 +199,25 @@ After doing this, answer the following questions:
   Remember in Activity 2 that this looked like:
 
 $$
-\hat{y} = b_0 + b_1 \times x_1
+\hat{y} = b_0 + b_1 \times x_1 
 $$
   
   where $b_0$ and $b_1$ were your model parameter estimates.
   Note that your model here will be different (and have more terms).
+  
+$$
+\hat{y} = 9.31111200 + 0.02401278 \times pf_expression_control -0.03001381\times pf_rank
+$$
 
 5. For each of the estimated parameters (the *y*-intercept and the slopes associated with each explanatory variable - three total), interpret these values in the context of this problem.
   That is, what do they mean for a "non-data" person?
+
+Answer:
+- **Intercept (9.31111200)**: the personal freedom score would be around 9.31. This number sets the baseline for our scores.
+  
+- **Slope for pf_expression_control (0.02401278)**: For each additional point in the control of media content (indicating more restrictions), the personal freedom score tends to increase only slightly, by about 0.024 points.
+  
+- **Slope for pf_rank (-0.03001381)**: For each step down in rank (where a higher rank number means worse personal freedom), the personal freedom score decreases by 0.03. This means that countries with higher ranks (worse standing in personal freedom) have notably lower personal freedom scores.
 
 ## Challenge: 3-D plots
 
@@ -200,11 +227,21 @@ Ideally, this would be something that plays nicely with (looks similar to) `{ggp
 
 - Create a new R code chunk, with a descriptive name, and add your code to create this plot.
 
+```{r 3-D plot}
+scatterplot3d(hfi_2016$pf_expression_control, hfi_2016$pf_rank, hfi_2016$pf_score, main="3D Scatterplot", xlab="Expression Control", ylab="Rank", zlab="Score")
+
+```
+
+
 After doing this, respond to the following prompt:
 
 6. Compare your 3-D scatterplot and the `GGally::ggpairs` output.
   Comment on the strengths and weaknesses of these two visualizations.
   Do both display on GitHub when you push your work there?
+
+
+Answer: One challenge is that it is hard to interpret in 3d whereas in 2d it was easy to interpret. The disadvantage for ggpairs is that it does not capture the three-variable interactions in the same way a 3-D plot does.
+
 
 # Day 2
 
