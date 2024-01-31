@@ -392,7 +392,7 @@ variables have only two levels. Fortunately, we can create our own.
   “r” just before the code chunk title.
 - Run your code chunk or knit your document.
 
-``` default
+``` r
 hfi_2016 <- hfi_2016 %>%
   mutate(west_atlantic = if_else(
     region %in% c("North America", "Latin America & the Caribbean"),
@@ -404,16 +404,29 @@ hfi_2016 <- hfi_2016 %>%
 7.  What is happening in the above code? What new variable did we
     create? How do you know it is new? What values does it take when?
 
+Answer: A new variable called west_atlantic is created within the
+hfi_2016 dataframe. This variable is new to the dataset and is defined
+based on the region variable. It assigns the value “No” if a country is
+in either “North America” or “Latin America & the Caribbean”, and “Yes”
+otherwise
+
 - In the code chunk below titled `qual-mlr`, replace “verbatim” with “r”
   just before the code chunk title.
 - Run your code chunk or knit your document.
 
-``` default
+``` r
 # review any visual patterns
 hfi_2016 %>% 
   select(pf_score, west_atlantic, pf_expression_control) %>% 
   ggpairs()
+```
 
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+
+![](activity03_files/figure-gfm/qual-mlr-1.png)<!-- -->
+
+``` r
 #fit the mlr model
 lm_spec <- linear_reg() %>%
   set_mode("regression") %>%
@@ -425,6 +438,13 @@ qual_mod <- lm_spec %>%
 # model output
 tidy(qual_mod)
 ```
+
+    ## # A tibble: 3 × 5
+    ##   term                  estimate std.error statistic  p.value
+    ##   <chr>                    <dbl>     <dbl>     <dbl>    <dbl>
+    ## 1 (Intercept)              4.38     0.213     20.5   1.57e-46
+    ## 2 west_atlanticYes        -0.102    0.167     -0.612 5.41e- 1
+    ## 3 pf_expression_control    0.540    0.0273    19.8   1.01e-44
 
 When looking at your `ggpairs` output, remember to ask yourself, “does
 it make sense to include all of these variables?” Specifically, if you
@@ -447,9 +467,25 @@ questions:
 8.  What is the label that R assigned to this explanatory variable
     `term`?
 
+Answer: west_atlanticYes, This is because R automatically creates dummy
+variables for qualitative data and uses one of the levels as the
+reference (in this case, “No”) and the other level is labelled with the
+variable name followed by the level name (here, “Yes”).
+
 9.  What information is represented here?
 
+Answer: The west_atlanticYes coefficient represents the difference in
+the average pf_score between the reference group (countries not in
+“North America” or “Latin America & the Caribbean”, labelled as “No”)
+and the “Yes” group (countries in “North America” or “Latin America &
+the Caribbean”).
+
 10. What information is missing here?
+
+Answer: By default, R takes the first level alphabetically as the
+reference level. Therefore, the coefficient for west_atlanticYes shows
+the effect relative to the reference level, which is west_atlanticNo,
+but this is not explicitly shown in the output.
 
 Your are essentially fitting two models (or $k$ models, where $k$ is the
 number of levels in your qualitative variable). From your reading, you
@@ -468,10 +504,19 @@ the level that is coded as a 0, using the `relevel` function. Use
 11. Write the estimated equation for your MLR model with a qualitative
     explanatory variable.
 
+Answer: pf_score = 4.3771413 + ( −0.1024089 × west_atlanticYes ) +
+0.5401164 × pf_expression_control
+
 12. Now, for each level of your qualitative variable, write the
     simplified equation of the estimated line for that level. Note that
     if your qualitative variable has two levels, you should have two
     simplified equations.
+
+Answer: pf_score(No) = 4.3771413+ 0.5401164 × pf_expression_control
+
+pf_score (Yes) = (4.3771413−0.1024089)+ 0.5401164 ×
+pf_expression_control pf_score (Yes) = 4.2747324 + 0.5401164 ×
+pf_expression_control
 
 The interpretation of the coefficients (parameter estimates) in multiple
 regression is slightly different from that of simple regression. The
@@ -486,8 +531,16 @@ constant*.
     categorical variable in the context of your problem. Page 83 of the
     text can help here (or have me come chat with you).
 
+Answer:
+
 14. Interpret the parameter estimate for your quantitative variable in
     the context of your problem.
+
+Answer: The parameter estimate for the quantitative variable
+pf_expression_control in the context of the model is 0.5401164. This
+estimate indicates that, holding the qualitative variable west_atlantic
+constant, a one-unit increase in pf_expression_control is associated
+with an increase of 0.5401164 in the pf_score.
 
 ## Challenge: Multiple levels
 
@@ -497,6 +550,35 @@ explanatory variable (`pf_expression_control`), but now use a
 qualitative variable with more than two levels (say, `region`) and
 obtain the `tidy` model output. How does R appear to handle categorical
 variables with more than two levels?
+
+``` r
+model <- lm(pf_score ~ region + pf_expression_control, data = hfi_2016)
+
+model_tidy <- tidy(model)
+print(model_tidy)
+```
+
+    ## # A tibble: 11 × 5
+    ##    term                                estimate std.error statistic  p.value
+    ##    <chr>                                  <dbl>     <dbl>     <dbl>    <dbl>
+    ##  1 (Intercept)                            5.39     0.272     19.8   7.47e-44
+    ##  2 regionEast Asia                        0.496    0.380      1.31  1.93e- 1
+    ##  3 regionEastern Europe                   0.326    0.309      1.06  2.93e- 1
+    ##  4 regionLatin America & the Caribbean   -0.229    0.300     -0.762 4.47e- 1
+    ##  5 regionMiddle East & North Africa      -1.39     0.299     -4.64  7.40e- 6
+    ##  6 regionNorth America                    0.610    0.542      1.13  2.62e- 1
+    ##  7 regionOceania                          0.233    0.433      0.537 5.92e- 1
+    ##  8 regionSouth Asia                      -0.716    0.305     -2.35  2.02e- 2
+    ##  9 regionSub-Saharan Africa              -0.746    0.283     -2.64  9.24e- 3
+    ## 10 regionWestern Europe                   0.522    0.345      1.52  1.32e- 1
+    ## 11 pf_expression_control                  0.387    0.0299    12.9   2.99e-26
+
+Answer: R handles categorical variables with more than two levels by
+creating a series of dummy variables.R named each term as region
+followed by the specific region name (except for the reference level
+which is included in the intercept). For each of these region terms,
+there is an associated estimate which quantifies the difference in the
+pf_score from the reference level for that particular region.
 
 # Day 3
 
