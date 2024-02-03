@@ -626,12 +626,19 @@ $$
   just before the code chunk title.
 - Run your code chunk or knit your document.
 
-``` default
+``` r
 # review any visual patterns
 hfi_2016 %>% 
   select(pf_score, west_atlantic, pf_expression_control) %>% 
   ggpairs()
+```
 
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+
+![](activity03_files/figure-gfm/int-mlr-1.png)<!-- -->
+
+``` r
 #fit the mlr model
 lm_spec <- linear_reg() %>%
   set_mode("regression") %>%
@@ -643,6 +650,14 @@ int_mod <- lm_spec %>%
 # model output
 tidy(int_mod)
 ```
+
+    ## # A tibble: 4 × 5
+    ##   term                                   estimate std.error statistic  p.value
+    ##   <chr>                                     <dbl>     <dbl>     <dbl>    <dbl>
+    ## 1 (Intercept)                               5.72     0.459      12.5  2.76e-25
+    ## 2 west_atlanticYes                         -1.60     0.484      -3.30 1.18e- 3
+    ## 3 pf_expression_control                     0.296    0.0789      3.75 2.45e- 4
+    ## 4 west_atlanticYes:pf_expression_control    0.275    0.0838      3.28 1.26e- 3
 
 Note that I shortened the model statement using
 `qualitative * quantitative`, but this can sometimes be confusing to
@@ -656,17 +671,41 @@ After doing this, answer the following question:
     with how R displays qualitative variables, interpret what this
     syntax means.
 
+Answer: the syntax west_atlanticYes:pf_expression_control indicates the
+interaction between being in the “Yes” category of the west_atlantic
+variable and the pf_expression_control variable
+
 16. Using page 100 of *ISLR* as a reference, if needed, and your work
     from Day 2, write the simplified equation of the line corresponding
     to each level of your qualitative explanatory variable.
 
+Answer: $$
+pfscore(no) = 5.7213860 + 0.2961044 × pf\_expression\_control 
+$$ $$
+pfscore(yes) = (5.7213860−1.5979076) + (0.2961044+0.2750385) × pf\_expression\_control
+$$
+
 17. For two observations with similar values of the quantitative , which
     level tends to have higher values of the response variable?
+
+Answer: The intercept for the “Yes” level is lower than for the “No”
+level, indicating that when pf_expression_control is 0, the “No” level
+has a higher pf_score. However, the slope for the “Yes” level is higher,
+which means that for similar values of pf_expression_control, there is a
+increase in pf_score is higher for the “Yes” level. The exact point
+where the “Yes” level overtakes the “No” level depends on the values of
+pf_expression_control.
 
 18. Like you did in Day 1, assess the fit of this model (no need to do
     any formal hypothesis testing - we will explore this next). How does
     `int_mod`’s fit compare to `mlr_mod`? What did you use to compare
     these? Why?
+
+Answer: It seems that the interaction term in int_mod is statistically
+significant, which suggests that the relationship between
+pf_expression_control and pf_score is different for different levels of
+west_atlantic. This suggest that int_mod might provide a better fit to
+the data than mlr_mod and also to check R-Squared value.
 
 Recall our brief discussion on how many disciplines are moving away from
 $p$-values in favor of other methods. We will explore $p$-values these
@@ -683,10 +722,10 @@ this to our candidate model (`int_mod`).
 - In the code chunk below titled `mod-comp`, replace “verbatim” with “r”
   just before the code chunk title.
 
-``` default
+``` r
 # null model
 null_mod <- lm_spec %>% 
-fit(response ~ 1, data = data)
+fit(pf_score ~ 1, data = hfi_2016)
 
 anova(
   extract_fit_engine(int_mod),
@@ -694,9 +733,26 @@ anova(
 )
 ```
 
+    ## Analysis of Variance Table
+    ## 
+    ## Model 1: pf_score ~ west_atlantic * pf_expression_control
+    ## Model 2: pf_score ~ 1
+    ##   Res.Df    RSS Df Sum of Sq     F    Pr(>F)    
+    ## 1    158  95.46                                 
+    ## 2    161 357.56 -3    -262.1 144.6 < 2.2e-16 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
 19. Using your background knowledge of $F$ tests, what is the $F$ test
     statistic and $p$-value for this test? Based on an $\alpha = 0.05$
     significant level, what should you conclude?
+
+Answer: The F test statistic for this test is 144.6 and the p-value is
+less than 2.2e-16. Given a significance level of α = 0.05, the small
+p-value indicates that we can reject the null hypothesis that no
+predictors are useful in the model. Means, the test suggests that at
+least one of the predictors provides useful information for predicting
+the response variable pf_score.
 
 ## Partial slope test - do all predictors help explain $y$?
 
@@ -718,6 +774,14 @@ combination of the other two variables, we should assess the first.
     test? Based on an $\alpha = 0.05$ significant level, what should you
     conclude?
 
+Answer: the $t$ test statistic and $p$-value for the slope associated
+with west_atlanticYes are -3.304640 and 0.0017668 respectively. Given an
+α = 0.05 significance level, the p-value is less than 0.05, which
+suggests that the slope for west_atlanticYes is significantly different
+from zero when other variables are included in the model. means that the
+level of west_atlantic (Yes vs. No) has a statistically significant
+effect on the personal freedom score, pf_score.
+
 If your interaction term was not significant, you could consider
 removing it. Now look at your two non-interaction terms…
 
@@ -734,3 +798,18 @@ interaction variable remains in your model.
 You have already done this step in past activities by exploring your
 residuals (Activity 2). Using your final model from Task 3, assess how
 well your model fits the data.
+
+``` r
+# Summary of the model to get residuals
+model_summary <- summary(int_mod)
+
+model_summary
+```
+
+    ##              Length Class      Mode
+    ## lvl           0     -none-     NULL
+    ## spec          7     linear_reg list
+    ## fit          13     lm         list
+    ## preproc       1     -none-     list
+    ## elapsed       1     -none-     list
+    ## censor_probs  0     -none-     list

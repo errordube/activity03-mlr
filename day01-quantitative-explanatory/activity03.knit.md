@@ -3,9 +3,7 @@ title: "Activity 3 - MLR"
 output: github_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+
 
 In the last activity, you might have noticed that I made this Rmd output a document with a type of `github_document` (in the YAML header underneath the title - on line 3) instead of a HTML, Word, or PDF document.
 This produces a GitHub friendly Markdown file that GitHub then renders to HTML.
@@ -22,7 +20,8 @@ Remember that [Emil Hvitfeldt](https://www.emilhvitfeldt.com/) (of Posit) has pu
   Be sure to check both your **User Library** and **System Library**.
 - If either of these are not currently listed (they should be because you verified this in Activity 1), type the following in your **Console** pane, replacing `package_name` with the appropriate name, and  press Enter/Return afterwards.
   
-  ```{r  eval = FALSE}
+  
+  ```r
   install.packages("package_name")
   ```
 
@@ -30,7 +29,8 @@ Remember that [Emil Hvitfeldt](https://www.emilhvitfeldt.com/) (of Posit) has pu
   
 - Run the `load-packages` code chunk or **knit** <img src="../README-img/knit-icon.png" alt="knit" width = "20"/> icon your Rmd document to verify that no errors occur.
 
-```{r load-packages, message=FALSE}
+
+```r
 library(tidyverse)
 library(tidymodels)
 library(GGally)
@@ -45,7 +45,8 @@ For example, [`GGally::ggpairs`](http://ggobi.github.io/ggally/articles/ggpairs.
   Be sure to check both your **User Library** and **System Library**.
 - If this is not currently listed, type the following in your **Console** pane and  press Enter/Return afterwards.
   
-  ```{r  eval = FALSE}
+  
+  ```r
   install.packages("GGally")
   ```
   
@@ -65,8 +66,23 @@ Create a new R code chunk below that is titled `load-data` and reads in the abov
 - Assign this data set into a data frame named `hfi` (short for "Human Freedom Index").
 - Filter the data `hfi` data frame for year 2016 and assigns the result to an R data object named `hfi_2016`. You will use `hfi_2016` for the remainder of this activity.
 
-```{r load-data}
+
+```r
 hfi <- readr::read_tsv("hfi.txt")
+```
+
+```
+## Rows: 1458 Columns: 123
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: "\t"
+## chr   (3): ISO_code, countries, region
+## dbl (120): year, pf_rol_procedural, pf_rol_civil, pf_rol_criminal, pf_rol, p...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+```
+
+```r
 hfi_2016 <- hfi %>% filter(year == "2016")
 ```
 
@@ -86,22 +102,33 @@ $$
 y = \beta_0 + \beta_1 \times x + \varepsilon
 $$
 
-```{r distrubution-plots}
+
+```r
 ggplot(hfi_2016, aes(y = pf_rank)) +
   geom_boxplot(fill = "grey") +
   ggtitle("Box Plot of Personal Freedom (rank)") +
   ylab("Personal Freedom (rank)")
+```
 
+![](activity03_files/figure-gfm/distrubution-plots-1.png)<!-- -->
+
+```r
 ggplot(hfi_2016, aes(y = pf_score)) +
   geom_boxplot(fill = "grey") +
   ggtitle("Box Plot of Personal Freedom Scores") +
   ylab("Personal Freedom Score")
+```
 
+![](activity03_files/figure-gfm/distrubution-plots-2.png)<!-- -->
+
+```r
 ggplot(hfi_2016, aes(y = pf_expression_control)) +
   geom_boxplot(fill = "grey") +
   ggtitle("Box Plot of Political Pressures and Controls on Media Content Index") +
   ylab("Political Pressures and Controls on Media Content Index")
 ```
+
+![](activity03_files/figure-gfm/distrubution-plots-3.png)<!-- -->
 
 
 
@@ -131,11 +158,14 @@ Now, we will obtain graphical and numerical summaries to describe the pairwise r
 - Replace `explanatory` in the `select` line with the variable you identified above
 - Run your code chunk or knit your document.
   
-```{r pairs-plot, warning=FALSE}
+
+```r
 hfi_2016 %>% 
   select(pf_score, pf_expression_control, pf_rank) %>% 
   ggpairs()
 ```
+
+![](activity03_files/figure-gfm/pairs-plot-1.png)<!-- -->
 
 Note that a warning message (really a list of warning messages) might display in your **Console** and likely under your R code chunk when you knit this report.
 In R, warning messages are not necessarily a bad thing and you should read these to make sure you understand what it is informing you of.
@@ -178,19 +208,37 @@ $$
 - Replace `explanatory`, similarly to what you did in your `pairs-plot` R code chunk.
 - Run your code chunk or knit your document.
   
-```{r mlr-model}
+
+```r
 #fit the mlr model
 lm_spec <- linear_reg() %>%
   set_mode("regression") %>%
   set_engine("lm")
 
 lm_spec
+```
 
+```
+## Linear Regression Model Specification (regression)
+## 
+## Computational engine: lm
+```
+
+```r
 mlr_mod <- lm_spec %>% 
 fit(pf_score ~ pf_expression_control + pf_rank, data = hfi_2016)
 
 # model output
 tidy(mlr_mod)
+```
+
+```
+## # A tibble: 3 × 5
+##   term                  estimate std.error statistic   p.value
+##   <chr>                    <dbl>     <dbl>     <dbl>     <dbl>
+## 1 (Intercept)             9.31     0.184       50.7  4.01e-100
+## 2 pf_expression_control   0.0240   0.0209       1.15 2.53e-  1
+## 3 pf_rank                -0.0300   0.00104    -29.0  2.57e- 65
 ```
 
 After doing this, answer the following questions:
@@ -227,10 +275,12 @@ Ideally, this would be something that plays nicely with (looks similar to) `{ggp
 
 - Create a new R code chunk, with a descriptive name, and add your code to create this plot.
 
-```{r 3-D plot}
-scatterplot3d(hfi_2016$pf_expression_control, hfi_2016$pf_rank, hfi_2016$pf_score, main="3D Scatterplot", xlab="Expression Control", ylab="Rank", zlab="Score")
 
+```r
+scatterplot3d(hfi_2016$pf_expression_control, hfi_2016$pf_rank, hfi_2016$pf_score, main="3D Scatterplot", xlab="Expression Control", ylab="Rank", zlab="Score")
 ```
+
+![](activity03_files/figure-gfm/3-D plot-1.png)<!-- -->
 
 
 After doing this, respond to the following prompt:
@@ -270,7 +320,8 @@ Fortunately, we can create our own.
 - In the code chunk below titled `binary-pred`, replace "verbatim" with "r" just before the code chunk title.
 - Run your code chunk or knit your document.
   
-```{r binary-pred}
+
+```r
 hfi_2016 <- hfi_2016 %>%
   mutate(west_atlantic = if_else(
     region %in% c("North America", "Latin America & the Caribbean"),
@@ -287,12 +338,22 @@ Answer: A new variable called west_atlantic is created within the hfi_2016 dataf
 - In the code chunk below titled `qual-mlr`, replace "verbatim" with "r" just before the code chunk title.
 - Run your code chunk or knit your document.
 
-```{r qual-mlr}
+
+```r
 # review any visual patterns
 hfi_2016 %>% 
   select(pf_score, west_atlantic, pf_expression_control) %>% 
   ggpairs()
+```
 
+```
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+```
+
+![](activity03_files/figure-gfm/qual-mlr-1.png)<!-- -->
+
+```r
 #fit the mlr model
 lm_spec <- linear_reg() %>%
   set_mode("regression") %>%
@@ -303,6 +364,15 @@ qual_mod <- lm_spec %>%
 
 # model output
 tidy(qual_mod)
+```
+
+```
+## # A tibble: 3 × 5
+##   term                  estimate std.error statistic  p.value
+##   <chr>                    <dbl>     <dbl>     <dbl>    <dbl>
+## 1 (Intercept)              4.38     0.213     20.5   1.57e-46
+## 2 west_atlanticYes        -0.102    0.167     -0.612 5.41e- 1
+## 3 pf_expression_control    0.540    0.0273    19.8   1.01e-44
 ```
 
 When looking at your `ggpairs` output, remember to ask yourself, "does it make sense to include all of these variables?"
@@ -370,13 +440,29 @@ Answer: The parameter estimate for the quantitative variable pf_expression_contr
 Below, create a new R code chunk (with a descriptive name) that fits a new model with the same response (`pf_score`) and quantitative explanatory variable (`pf_expression_control`), but now use a qualitative variable with more than two levels (say, `region`) and obtain the `tidy` model output.
 How does R appear to handle categorical variables with more than two levels?
 
-```{r Multiple levels}
 
+```r
 model <- lm(pf_score ~ region + pf_expression_control, data = hfi_2016)
 
 model_tidy <- tidy(model)
 print(model_tidy)
+```
 
+```
+## # A tibble: 11 × 5
+##    term                                estimate std.error statistic  p.value
+##    <chr>                                  <dbl>     <dbl>     <dbl>    <dbl>
+##  1 (Intercept)                            5.39     0.272     19.8   7.47e-44
+##  2 regionEast Asia                        0.496    0.380      1.31  1.93e- 1
+##  3 regionEastern Europe                   0.326    0.309      1.06  2.93e- 1
+##  4 regionLatin America & the Caribbean   -0.229    0.300     -0.762 4.47e- 1
+##  5 regionMiddle East & North Africa      -1.39     0.299     -4.64  7.40e- 6
+##  6 regionNorth America                    0.610    0.542      1.13  2.62e- 1
+##  7 regionOceania                          0.233    0.433      0.537 5.92e- 1
+##  8 regionSouth Asia                      -0.716    0.305     -2.35  2.02e- 2
+##  9 regionSub-Saharan Africa              -0.746    0.283     -2.64  9.24e- 3
+## 10 regionWestern Europe                   0.522    0.345      1.52  1.32e- 1
+## 11 pf_expression_control                  0.387    0.0299    12.9   2.99e-26
 ```
 
 Answer: R handles categorical variables with more than two levels by creating a series of dummy variables.R named each term as region followed by the specific region name (except for the reference level which is included in the intercept). For each of these region terms, there is an associated estimate which quantifies the difference in the pf_score from the reference level for that particular region.
@@ -415,12 +501,22 @@ $$
 - In the code chunk below titled `int-mlr`, replace "verbatim" with "r" just before the code chunk title.
 - Run your code chunk or knit your document.
 
-```{r int-mlr}
+
+```r
 # review any visual patterns
 hfi_2016 %>% 
   select(pf_score, west_atlantic, pf_expression_control) %>% 
   ggpairs()
+```
 
+```
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+```
+
+![](activity03_files/figure-gfm/int-mlr-1.png)<!-- -->
+
+```r
 #fit the mlr model
 lm_spec <- linear_reg() %>%
   set_mode("regression") %>%
@@ -431,6 +527,16 @@ int_mod <- lm_spec %>%
 
 # model output
 tidy(int_mod)
+```
+
+```
+## # A tibble: 4 × 5
+##   term                                   estimate std.error statistic  p.value
+##   <chr>                                     <dbl>     <dbl>     <dbl>    <dbl>
+## 1 (Intercept)                               5.72     0.459      12.5  2.76e-25
+## 2 west_atlanticYes                         -1.60     0.484      -3.30 1.18e- 3
+## 3 pf_expression_control                     0.296    0.0789      3.75 2.45e- 4
+## 4 west_atlanticYes:pf_expression_control    0.275    0.0838      3.28 1.26e- 3
 ```
 
 Note that I shortened the model statement using `qualitative * quantitative`, but this can sometimes be confusing to read.
@@ -473,7 +579,8 @@ One way to check this is to build our null model (no predictors) and then compar
 
 - In the code chunk below titled `mod-comp`, replace "verbatim" with "r" just before the code chunk title.
   
-```{r mod-comp}
+
+```r
 # null model
 null_mod <- lm_spec %>% 
 fit(pf_score ~ 1, data = hfi_2016)
@@ -482,6 +589,18 @@ anova(
   extract_fit_engine(int_mod),
   extract_fit_engine(null_mod)
 )
+```
+
+```
+## Analysis of Variance Table
+## 
+## Model 1: pf_score ~ west_atlantic * pf_expression_control
+## Model 2: pf_score ~ 1
+##   Res.Df    RSS Df Sum of Sq     F    Pr(>F)    
+## 1    158  95.46                                 
+## 2    161 357.56 -3    -262.1 144.6 < 2.2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
 19. Using your background knowledge of $F$ tests, what is the $F$ test statistic and $p$-value for this test?
@@ -521,11 +640,22 @@ You also should not remove a main variable (non-interaction variable) if the int
 You have already done this step in past activities by exploring your residuals (Activity 2).
 Using your final model from Task 3, assess how well your model fits the data.
 
-```{r residual-assessment}
+
+```r
 # Summary of the model to get residuals
 model_summary <- summary(int_mod)
 
 model_summary
+```
+
+```
+##              Length Class      Mode
+## lvl           0     -none-     NULL
+## spec          7     linear_reg list
+## fit          13     lm         list
+## preproc       1     -none-     list
+## elapsed       1     -none-     list
+## censor_probs  0     -none-     list
 ```
 
 
