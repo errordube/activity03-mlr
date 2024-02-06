@@ -273,7 +273,7 @@ Fortunately, we can create our own.
 ```{r binary-pred}
 hfi_2016 <- hfi_2016 %>%
   mutate(west_atlantic = if_else(
-    region %in% c("North America", "Latin America & the Caribbean"),
+    ! region %in% c("North America", "Latin America & the Caribbean"),
     "No",
     "Yes"
   ))
