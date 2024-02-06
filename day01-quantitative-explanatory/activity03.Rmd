@@ -340,16 +340,16 @@ Use `?relevel` to learn more.
 
 11. Write the estimated equation for your MLR model with a qualitative explanatory variable.
 
-Answer: pf_score = 4.3771413 + ( −0.1024089 × west_atlanticYes ) + 0.5401164 × pf_expression_control
+Answer: pf_score = 4.2747325 + ( 0.1024089 × west_atlanticYes ) + 0.5401164 × pf_expression_control
 
 12. Now, for each level of your qualitative variable, write the simplified equation of the estimated line for that level. 
   Note that if your qualitative variable has two levels, you should have two simplified equations.
 
-Answer:  pf_score(No) = 4.3771413+ 0.5401164 × pf_expression_control
+Answer:  pf_score(No) = 4.2747325+ 0.5401164 × pf_expression_control
 
  
-pf_score (Yes) = (4.3771413−0.1024089)+ 0.5401164 × pf_expression_control
-pf_score (Yes) = 4.2747324 + 0.5401164 × pf_expression_control
+pf_score (Yes) = (4.3771413 + 0.1024089)+ 0.5401164 × pf_expression_control
+pf_score (Yes) = 4.4795502 + 0.5401164 × pf_expression_control
 
 
 The interpretation of the coefficients (parameter estimates) in multiple regression is slightly different from that of simple regression.
@@ -521,11 +521,28 @@ You also should not remove a main variable (non-interaction variable) if the int
 You have already done this step in past activities by exploring your residuals (Activity 2).
 Using your final model from Task 3, assess how well your model fits the data.
 
-```{r residual-assessment}
-# Summary of the model to get residuals
-model_summary <- summary(int_mod)
 
-model_summary
+```{r testing and training}
+# Set seed before random split
+set.seed(2024)
+
+# Putting 80% of the data into the training set
+hfi_2016_split <- initial_split(hfi_2016, prop = 0.80)
+
+# Assign the two splits to data frames 
+hfi_2016_train <- training(hfi_2016_split)
+hfi_2016_test <- testing(hfi_2016_split)
+
+# splits
+hfi_2016_train
+hfi_2016_test
+
 ```
 
+```{r train-fit-lm}
+mlr_train <- lm_spec %>% 
+  fit(pf_score ~ west_atlantic * pf_expression_control, data = hfi_2016)
+
+tidy(mlr_train)
+```
 
